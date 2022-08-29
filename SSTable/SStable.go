@@ -3,11 +3,13 @@ package SSTable
 import (
 	"bufio"
 	"encoding/binary"
-	"github.com/TamaraDzambic/NASP-projekat/WriteAheadLog"
 	"io"
 	"os"
 	"path/filepath"
 	"sort"
+
+	"github.com/TamaraDzambic/NASP-projekat/WriteAheadLog"
+	"novi/MerkleTree"
 )
 
 type SSTable struct {
@@ -16,7 +18,7 @@ type SSTable struct {
 	index        *os.File
 	summary 	 *os.File
 	bf  BloomFilter
-	//MerkleTree   MerkleTree.MerkleRoot
+	MerkleTree   MerkleTree.MerkleRoot
 }
 
 func  NewSST(datasize uint, dataFN string, indexFN string, summaryFN string) *SSTable{
@@ -60,17 +62,19 @@ func (table *SSTable) createIndex(){
 }
 
 func (table *SSTable) WriteData(data []WriteAheadLog.Entry) {
+	var dataInBytesForMerkle [][]byte
 	table.data, _ = os.OpenFile(table.data.Name(), os.O_APPEND, 0777)
 
 	for _, entry := range data {
 		offset := FileSize(table.data)
 		table.data.Write(entry.Encode())
-        table.indexMap[entry.Key] = offset
+		table.indexMap[entry.Key] = offset
 
 		table.bf.Add(entry)
+		dataInBytesForMerkle = append(dataInBytesForMerkle, entry.Encode())
 	}
 	table.createIndex()
-
+	table.MerkleTree = *MerkleTree.BuildTree(dataInBytesForMerkle, "C:\\Users\\ANJA\\Documents\\GitHub\\NASP-projekat\\MerkleTree\\Files\\metadata.txt")
 	writeBloomFilter("bloomFile", &table.bf)
 }
 
@@ -91,7 +95,7 @@ func (table *SSTable) Find( key string) (entry WriteAheadLog.Entry, found bool) 
 
 	minKey := ReadKey(readerS)
 	maxKey := ReadKey(readerS)
-	
+
 	if minKey > key || maxKey < key {
 		found = false
 		return
@@ -119,7 +123,7 @@ func (table *SSTable) Find( key string) (entry WriteAheadLog.Entry, found bool) 
 			err, entry = WriteAheadLog.Decode(readerD)
 			if err == nil {
 				found = true
-				return 
+				return
 			}
 
 		}
