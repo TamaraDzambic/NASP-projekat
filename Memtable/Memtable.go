@@ -1,4 +1,4 @@
-package memtable
+package Memtable
 
 import (
 	"github.com/TamaraDzambic/NASP-projekat/SSTable"
@@ -11,12 +11,14 @@ type Memtable struct {
 }
 
 
-func (memtable *Memtable) Set(key string, value []byte, tombstone bool) {
+func (memtable *Memtable) Set(key string, value []byte, tombstone bool) bool{
 	if memtable.SkipList.size <= memtable.capacity {
 		memtable.SkipList.Set(key, value, tombstone)
+		return false //no flush
 	} else {
 		memtable.Flush()
 		memtable.SkipList.Set(key, value, tombstone)
+		return true //flush
 	}
 }
 
