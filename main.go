@@ -1,10 +1,5 @@
 package main
 
-import (
-	"fmt"
-	"github.com/TamaraDzambic/NASP-projekat/memtable"
-)
-
 func main() {
 	//e1 := WriteAheadLog.CreateEntry("5", []byte("0001"), 0)
 	//e2 := WriteAheadLog.CreateEntry("2", []byte("0002"), 0)
@@ -36,26 +31,28 @@ func main() {
 	//fmt.Println(entry.Key, entry.Value, entry.Tombstone)
 
 
-
-	m := memtable.NewMemtable(11)
+	//table := SSTable.NewSST(5, "SSTable\\files\\data", "SSTable\\files\\index", "SSTable\\files\\summary")
+	//m := memtable.NewMemtable(5, table)
 
 	//m.SkipList.PrintList()
 
-	a := m.Set("111",[]byte("1"), false)
-	fmt.Println(a)
-	a = m.Set("555",[]byte("65"), false)
-	a = m.Set("333",[]byte("3"), false)
-	a = m.Set("444",[]byte("4"), false)
-	a = m.Set("222",[]byte("2"), false)
-	a = m.Set("666",[]byte("2"), false)
-	a = m.Set("888",[]byte("2"), false)
-	a = m.Set("777",[]byte("2"), false)
-	a = m.Set("999",[]byte("2"), false)
-	a = m.Set("101010",[]byte("2"), false)
-	a = m.Set("11111",[]byte("2"), false)
-	a = m.Set("2222215484872",[]byte("2"), false)
-	m.SkipList.PrintList()
-
+	//m.Set("111",[]byte("1"), false)
+	//m.Set("555",[]byte("65"), false)
+	//m.Set("333",[]byte("3"), false)
+	//m.Set("444",[]byte("4"), false)
+	//m.Set("222",[]byte("2"), false)
+	//
+	//m.Set("666",[]byte("2"), false)
+	//m.Set("888",[]byte("2"), false)
+	//m.Set("777",[]byte("2"), false)
+	//m.Set("999",[]byte("2"), false)
+	//m.Set("101010",[]byte("2"), false)
+	//
+	//m.Set("11111",[]byte("2"), false)
+	//m.Set("2222215484872",[]byte("2"), false)
+	//m.SkipList.PrintList()
+	//fmt.Println(m.SSTable.Find("999"))
+	//fmt.Println(m.SSTable.Find("333"))
 	//
 	//
 	//	w, err := WriteAheadLog.CreateWAL("WriteAheadLog/WAL/", 6, 2)

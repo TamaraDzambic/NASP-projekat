@@ -7,7 +7,7 @@ import (
 type Memtable struct {
 	SkipList *SkipList
 	capacity int
-	SSTable SSTable.SSTable
+	SSTable *SSTable.SSTable
 }
 
 
@@ -32,11 +32,11 @@ func (memtable *Memtable) Remove(key string){
 	memtable.SkipList.Remove(key)
 }
 
-func NewMemtable(maxCapacity int) *Memtable {
+func NewMemtable(maxCapacity int, table *SSTable.SSTable) *Memtable {
 	return &Memtable{
 		SkipList: CreateSkipList(maxCapacity),
 		capacity: maxCapacity,
-		SSTable: *SSTable.NewSST(uint(maxCapacity), "SSTable\\files\\data", "SSTable\\files\\index", "SSTable\\files\\summary"),
+		SSTable: table,
 	}
 }
 
@@ -46,5 +46,5 @@ func (memtable *Memtable) Flush(){
 	memtable.SSTable.WriteData(elements)
 	memtable.SkipList.PrintList()
 	memCap := memtable.capacity
-	*memtable = *NewMemtable(memCap)
+	*memtable = *NewMemtable(memCap, memtable.SSTable)
 }
