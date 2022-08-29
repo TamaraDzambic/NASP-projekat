@@ -1,6 +1,8 @@
 package memtable
+
 import (
 	"fmt"
+	"github.com/TamaraDzambic/NASP-projekat/WriteAheadLog"
 	"math/rand"
 )
 
@@ -8,7 +10,6 @@ type Element struct {
 	key       string
 	value     []byte
 	tombstone bool
-	prev 	  *Element
 	next      []*Element
 }
 func createElement(key string, value []byte, tombstone bool, height int)*Element{
@@ -28,15 +29,15 @@ type SkipList struct {
 	head      *Element
 }
 
-func createSkipList(maxHeight int) *SkipList{
-	newEl := createElement("", []byte("none"), false, maxHeight)
-	return &SkipList{maxHeight: maxHeight, height: 0, size: 0, head: newEl}
-}
 
+func CreateSkipList(maxHeight int) *SkipList {
+	root := createElement("", []byte("none"), false, maxHeight)
+	return &SkipList{maxHeight, 1, 1, root}
+}
 
 func (skipL *SkipList) roll() int {
 	height := 0
-	for ; rand.Int31n(2) == 1 && height < skipL.maxHeight; height++ {
+	for ; rand.Int31n(2) == 1; height++ {
 		if height > skipL.height {
 			skipL.height = height
 			return height
@@ -45,73 +46,122 @@ func (skipL *SkipList) roll() int {
 	return height
 }
 
-
-
-func (skipL *SkipList) Set (key string, value []byte, tombstone bool) bool{
+func (skipL *SkipList) Set(key string, value []byte, tombstone bool) *Element {
 	newElement := skipL.Get(key)
-	if newElement == nil {
+	if newElement==nil{
 		height := skipL.roll()
-		fmt.Println(height, ": heigt, ", key, ": key")
-		newElement = createElement(key, value, tombstone, height+1)
-
-		current := skipL.head
+		node := createElement(key, value, tombstone, height+1)
 		for i := skipL.height - 1; i >= 0; i-- {
-
-			next := current.next[i]
+			currentNode := skipL.head
+			next := currentNode.next[i]
 			for next != nil {
 				if next == nil || next.key > key {
 					break
 				}
-				current = next
-				next = current.next[i]
+				currentNode = next
+				next = currentNode.next[i]
+
 			}
 			if i <= height {
-				skipL.size++
-				newElement.next[i] = next
-				current.next[i] = newElement
+				node.next[i] = next
+				currentNode.next[i] = node
 			}
 		}
-		return true
-	}else{
-		for i := skipL.height - 1; i >= 0; i-- {
-			current := skipL.head
-			next := current.next[i]
-			for next != nil {
-				if next == nil || next.key > key {
-					break
-				}
-				current = next
-				next = current.next[i]
-			}
-			if current.key == key {
-				newElement.value = value
-				newElement.tombstone = tombstone
-			}
-		}
-		return true
+		skipL.size++
+		return node
+	} else {
+		skipL.Update(key, value, tombstone)
+		return newElement
 	}
+
 }
 
-func (skipL *SkipList) Get (key string) *Element{
-	current := skipL.head
-	for i:= skipL.height; i>=0; i--{
-		for ; current.next[i] != nil; current = current.next[i] {
-			next := current.next[i]
-			if next.key > key {
+func (skipL *SkipList) Get(key string) *Element {
+	currentNode := skipL.head
+	for i := skipL.height - 1; i >= 0; i-- {
+		next := currentNode.next[i]
+		for next != nil {
+			currentNode = next
+			next = currentNode.next[i]
+			if currentNode.key == key {
+				return currentNode
+			}
+			if next == nil || currentNode.key > key {
 				break
 			}
 		}
-		if current.key == key {
-			return current
-		}
 	}
+
 	return nil
 }
 
-func (skipL *SkipList) Remove (key string) bool{
+func (skipL *SkipList) Remove(key string) *Element {
+	currentNode := skipL.head
+	for i := skipL.height - 1; i >= 0; i-- {
+		next := currentNode.next[i]
+		for next != nil {
+			currentNode = next
+			next = currentNode.next[i]
+			if next == nil || currentNode.key > key {
+				break
+			}
+			if currentNode.key == key {
+				currentNode.tombstone = true
+				tmp := currentNode
+				currentNode = currentNode.next[i]
+				return tmp
+			}
+		}
+	}
 
-	return true
+	return nil
+
 }
+
+func (skipL *SkipList) Update(key string, value []byte, tombstone bool) *Element {
+
+	currentNode := skipL.head
+	for i := skipL.height - 1; i >= 0; i-- {
+		next := currentNode.next[i]
+		for next != nil {
+			currentNode = next
+			next = currentNode.next[i]
+			if next == nil || currentNode.key > key {
+				break
+			}
+			if currentNode.key == key {
+				currentNode.value = value
+				currentNode.tombstone = tombstone
+				tmp := currentNode
+				currentNode = currentNode.next[i]
+				return tmp
+			}
+		}
+	}
+
+	return nil
+
+}
+
+func (skipL *SkipList) GetElements () []WriteAheadLog.Entry{
+	var lista []WriteAheadLog.Entry
+	curr := skipL.head
+	for curr.next[0] != nil {
+		entry := WriteAheadLog.CreateEntry(curr.next[0].key, curr.next[0].value, BoolToByte(curr.next[0].tombstone))
+		lista = append(lista, entry)
+		curr = curr.next[0]
+	}
+	return lista
+}
+
+func BoolToByte(flag bool) byte{
+	if flag==true{
+		return 0
+	} else {
+		return 1
+	}
+}
+
 
 func (skipL *SkipList) PrintList () {
 	for i := skipL.height; i >= 0; i-- {
@@ -119,7 +169,7 @@ func (skipL *SkipList) PrintList () {
 		fmt.Print("[")
 		for curr.next[i] != nil {
 			if curr.next[i].tombstone == false {
-				fmt.Print(curr.next[i].key + ", ")
+				fmt.Print(curr.next[i].key + " ")
 			}
 			curr = curr.next[i]
 		}
