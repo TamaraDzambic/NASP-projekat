@@ -1,0 +1,7 @@
+WALSegmentCapacity:3
+WALlwm:2
+TokenBucketRate:5
+TokenBucketMaxTokens:10
+SSTableDataSize:6
+MemtableMaxCapacity:6
+LRUcapacity:15

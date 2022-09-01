@@ -13,6 +13,7 @@ import (
 )
 
 type Engine struct {
+	config *Config
 	wal *WriteAheadLog.WAL
 	memtable *Memtable.Memtable
 	sstable *SSTable.SSTable
@@ -20,18 +21,20 @@ type Engine struct {
 	tokenBucket *TokenBucket.TokenBucket
 }
 
-const capacity = 6
 
-func CreateEngine() *Engine{
+func CreateEngine(config *Config) *Engine{
 	engine := Engine{}
-	engine.wal = WriteAheadLog.CreateWAL("WriteAheadLog\\WAL\\", capacity/2, 2)
-	engine.sstable = SSTable.NewSST(capacity, "SSTable\\files\\data", "SSTable\\files\\index", "SSTable\\files\\summary")
-	engine.memtable = Memtable.NewMemtable(capacity, engine.sstable)
-	engine.cache = LRU.New(15)
-	engine.tokenBucket = TokenBucket.NewTokenBucket(5,10)
+	engine.config = config
+	engine.wal = WriteAheadLog.CreateWAL("WriteAheadLog\\WAL\\", engine.config.WALSegmentCapacity, engine.config.WALlwm)
+	engine.sstable = SSTable.NewSST(engine.config.SSTableDataSize, "SSTable\\files\\data", "SSTable\\files\\index", "SSTable\\files\\summary")
+	engine.memtable = Memtable.NewMemtable(engine.config.MemtableMaxCapacity, engine.sstable)
+	engine.cache = LRU.New(engine.config.LRUcapacity)
+	engine.tokenBucket = TokenBucket.NewTokenBucket(engine.config.TokenBucketRate, engine.config.TokenBucketMaxTokens)
 	engine.walToMem()
 	return &engine
 }
+
+
 
 func (engine *Engine)walToMem(){
 	//proveri da li ima nesto u walu, i dodaj to u mem
