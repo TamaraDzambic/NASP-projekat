@@ -3,13 +3,14 @@ package SSTable
 import (
 	"bufio"
 	"encoding/binary"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"sort"
 
 	"github.com/TamaraDzambic/NASP-projekat/WriteAheadLog"
-	"novi/MerkleTree"
+	"github.com/TamaraDzambic/NASP-projekat/merkleTree"
 )
 
 type SSTable struct {
@@ -17,14 +18,47 @@ type SSTable struct {
 	data         *os.File
 	index        *os.File
 	summary 	 *os.File
-	bf  BloomFilter
-	MerkleTree   MerkleTree.MerkleRoot
+	bf         *BloomFilter
+	MerkleTree *merkleTree.MerkleRoot
 }
 
 func  NewSST(datasize uint, dataFN string, indexFN string, summaryFN string) *SSTable{
-	sstable :=	SSTable{indexMap: make(map[string]uint64), summary: CreateFile(summaryFN), data: CreateFile(dataFN), index: CreateFile(indexFN), bf: *NewBF(datasize, 0.01)}
+	// ucitaj bloom ako postoji
+	//bloom := *readBloomFilter("bloomFile")
+	bloom := *NewBF(datasize, 2)
+	bloom = *readBloomFilter("bloomFile")
+	sstable :=	SSTable{indexMap: make(map[string]uint64), summary: openFile(summaryFN), data: openFile(dataFN), index: openFile(indexFN), bf: &bloom}
+	sstable.loadIndex()
 	defer CloseFiles(sstable)
 	return &sstable
+}
+
+func (table *SSTable)loadIndex(){
+	file, err := os.OpenFile(table.index.Name(), os.O_RDONLY, 0777)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+	reader := bufio.NewReader(file)
+	for {
+		key, err := ReadKey(reader)
+		offset, _ := ReadOffset(reader)
+		if err == nil {
+			table.indexMap[key] = offset
+		}else {
+			break
+		}
+	}
+}
+
+func openFile(fn string) *os.File{
+	err := os.MkdirAll(filepath.Dir(fn), 0777)
+	fp, err := os.Open(fn)
+	if err != nil {
+
+		fp = CreateFile(fn)
+	}
+	return fp
 }
 
 func CreateFile(fn string) *os.File {
@@ -35,6 +69,8 @@ func CreateFile(fn string) *os.File {
 	}
 	return fp
 }
+
+
 
 func (table *SSTable) createIndex(){
 	//sortiraj index mapu i upisi u index i summary
@@ -74,8 +110,8 @@ func (table *SSTable) WriteData(data []WriteAheadLog.Entry) {
 		dataInBytesForMerkle = append(dataInBytesForMerkle, entry.Encode())
 	}
 	table.createIndex()
-	table.MerkleTree = *MerkleTree.BuildTree(dataInBytesForMerkle, "C:\\Users\\ANJA\\Documents\\GitHub\\NASP-projekat\\MerkleTree\\Files\\metadata.txt")
-	writeBloomFilter("bloomFile", &table.bf)
+	table.MerkleTree = merkleTree.BuildTree(dataInBytesForMerkle, "MerkleTree\\Files\\metadata.txt")
+	writeBloomFilter("bloomFile", table.bf)
 }
 
 
@@ -86,22 +122,22 @@ func (table *SSTable) Find( key string) (entry WriteAheadLog.Entry, found bool) 
 	defer CloseFiles(*table)
 
 	if !table.bf.Find(key) {
+		fmt.Println("aaaaa")
 		found = false
 		return
 	}
-
 	readerS := bufio.NewReader(table.summary)
 	readerI := bufio.NewReader(table.index)
+	table.summary.Seek(0,0)
 
-	minKey := ReadKey(readerS)
-	maxKey := ReadKey(readerS)
-
+	minKey, _ := ReadKey(readerS)
+	maxKey, _ := ReadKey(readerS)
 	if minKey > key || maxKey < key {
 		found = false
 		return
 	}
 	for {
-		keyS := ReadKey(readerS)
+		keyS, _ := ReadKey(readerS)
 		if keyS == "" {
 			found = false
 			break
@@ -146,21 +182,22 @@ func WriteKey(fp *os.File, key string) {
 }
 
 
-func ReadKey(reader *bufio.Reader) string {
+func ReadKey(reader *bufio.Reader) (string, error) {
 	keyLenBytes := make([]byte, 8)
 	_, err := reader.Read(keyLenBytes)
 	if err != nil {
-		panic(err)
+		return "", err
+
 	}
 	keyLen := binary.LittleEndian.Uint64(keyLenBytes)
 
 	keyBytes := make([]byte, keyLen)
 	_, err = reader.Read(keyBytes)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
-	return string(keyBytes)
+	return string(keyBytes), nil
 }
 
 func WriteOffset(fp *os.File, value uint64) {

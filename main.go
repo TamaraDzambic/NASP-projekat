@@ -1,6 +1,14 @@
 package main
 
+import (
+	"github.com/TamaraDzambic/NASP-projekat/Engine"
+)
+
 func main() {
+
+	engine := Engine.CreateEngine()
+	Engine.Menu(engine)
+
 	//e1 := WriteAheadLog.CreateEntry("5", []byte("0001"), 0)
 	//e2 := WriteAheadLog.CreateEntry("2", []byte("0002"), 0)
 	//e3 := WriteAheadLog.CreateEntry("1", []byte("000853"), 0)
@@ -30,10 +38,10 @@ func main() {
 	//entry, _ = table.Find("5")
 	//fmt.Println(entry.Key, entry.Value, entry.Tombstone)
 
-
+	//
 	//table := SSTable.NewSST(5, "SSTable\\files\\data", "SSTable\\files\\index", "SSTable\\files\\summary")
-	//m := memtable.NewMemtable(5, table)
-
+	//m := Memtable.NewMemtable(5, table)
+	//
 	//m.SkipList.PrintList()
 
 	//m.Set("111",[]byte("1"), false)
