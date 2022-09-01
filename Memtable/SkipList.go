@@ -7,17 +7,17 @@ import (
 )
 
 type Element struct {
-	key       string
-	value     []byte
-	tombstone bool
+	Key       string
+	Value     []byte
+	Tombstone bool
 	next      []*Element
 }
 func createElement(key string, value []byte, tombstone bool, height int)*Element{
 	return &Element{
-		key: key,
-		value: value,
-		tombstone: tombstone,
-		next: make([]*Element, height),
+		Key:       key,
+		Value:     value,
+		Tombstone: tombstone,
+		next:      make([]*Element, height),
 	}
 }
 
@@ -55,7 +55,7 @@ func (skipL *SkipList) Set(key string, value []byte, tombstone bool) *Element {
 			currentNode := skipL.head
 			next := currentNode.next[i]
 			for next != nil {
-				if next == nil || next.key > key {
+				if next == nil || next.Key > key {
 					break
 				}
 				currentNode = next
@@ -83,10 +83,10 @@ func (skipL *SkipList) Get(key string) *Element {
 		for next != nil {
 			currentNode = next
 			next = currentNode.next[i]
-			if currentNode.key == key {
+			if currentNode.Key == key {
 				return currentNode
 			}
-			if next == nil || currentNode.key > key {
+			if next == nil || currentNode.Key > key {
 				break
 			}
 		}
@@ -102,11 +102,11 @@ func (skipL *SkipList) Remove(key string) *Element {
 		for next != nil {
 			currentNode = next
 			next = currentNode.next[i]
-			if next == nil || currentNode.key > key {
+			if next == nil || currentNode.Key > key {
 				break
 			}
-			if currentNode.key == key {
-				currentNode.tombstone = true
+			if currentNode.Key == key {
+				currentNode.Tombstone = true
 				tmp := currentNode
 				currentNode = currentNode.next[i]
 				return tmp
@@ -126,12 +126,12 @@ func (skipL *SkipList) Update(key string, value []byte, tombstone bool) *Element
 		for next != nil {
 			currentNode = next
 			next = currentNode.next[i]
-			if next == nil || currentNode.key > key {
+			if next == nil || currentNode.Key > key {
 				break
 			}
-			if currentNode.key == key {
-				currentNode.value = value
-				currentNode.tombstone = tombstone
+			if currentNode.Key == key {
+				currentNode.Value = value
+				currentNode.Tombstone = tombstone
 				tmp := currentNode
 				currentNode = currentNode.next[i]
 				return tmp
@@ -147,7 +147,7 @@ func (skipL *SkipList) GetElements () []WriteAheadLog.Entry{
 	var lista []WriteAheadLog.Entry
 	curr := skipL.head
 	for curr.next[0] != nil {
-		entry := WriteAheadLog.CreateEntry(curr.next[0].key, curr.next[0].value, BoolToByte(curr.next[0].tombstone))
+		entry := WriteAheadLog.CreateEntry(curr.next[0].Key, curr.next[0].Value, BoolToByte(curr.next[0].Tombstone))
 		lista = append(lista, entry)
 		curr = curr.next[0]
 	}
@@ -168,8 +168,8 @@ func (skipL *SkipList) PrintList () {
 		curr := skipL.head
 		fmt.Print("[")
 		for curr.next[i] != nil {
-			if curr.next[i].tombstone == false {
-				fmt.Print(curr.next[i].key + " ")
+			if curr.next[i].Tombstone == false {
+				fmt.Print(curr.next[i].Key + " ")
 			}
 			curr = curr.next[i]
 		}

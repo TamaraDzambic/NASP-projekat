@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"sort"
 
+	"github.com/TamaraDzambic/NASP-projekat/merkleTree"
 	"github.com/TamaraDzambic/NASP-projekat/WriteAheadLog"
-	"novi/MerkleTree"
 )
 
 type SSTable struct {
@@ -17,11 +17,12 @@ type SSTable struct {
 	data         *os.File
 	index        *os.File
 	summary 	 *os.File
-	bf  BloomFilter
-	MerkleTree   MerkleTree.MerkleRoot
+	bf         BloomFilter
+	MerkleTree merkleTree.MerkleRoot
 }
 
 func  NewSST(datasize uint, dataFN string, indexFN string, summaryFN string) *SSTable{
+	// ucitaj bloom ako postoji
 	sstable :=	SSTable{indexMap: make(map[string]uint64), summary: CreateFile(summaryFN), data: CreateFile(dataFN), index: CreateFile(indexFN), bf: *NewBF(datasize, 0.01)}
 	defer CloseFiles(sstable)
 	return &sstable
@@ -74,7 +75,7 @@ func (table *SSTable) WriteData(data []WriteAheadLog.Entry) {
 		dataInBytesForMerkle = append(dataInBytesForMerkle, entry.Encode())
 	}
 	table.createIndex()
-	table.MerkleTree = *MerkleTree.BuildTree(dataInBytesForMerkle, "C:\\Users\\ANJA\\Documents\\GitHub\\NASP-projekat\\MerkleTree\\Files\\metadata.txt")
+	table.MerkleTree = *merkleTree.BuildTree(dataInBytesForMerkle, "C:\\Users\\ANJA\\Documents\\GitHub\\NASP-projekat\\MerkleTree\\Files\\metadata.txt")
 	writeBloomFilter("bloomFile", &table.bf)
 }
 
