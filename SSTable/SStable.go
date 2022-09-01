@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"sort"
 
+	"github.com/TamaraDzambic/NASP-projekat/MerkleTree"
 	"github.com/TamaraDzambic/NASP-projekat/WriteAheadLog"
-	"novi/MerkleTree"
 )
 
 type SSTable struct {

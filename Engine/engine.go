@@ -3,7 +3,7 @@ package Engine
 import (
 	"bufio"
 	"fmt"
-	"github.com/TamaraDzambic/NASP-projekat/Memtable"
+	_ "github.com/TamaraDzambic/NASP-projekat/Memtable"
 	"github.com/TamaraDzambic/NASP-projekat/SSTable"
 	"github.com/TamaraDzambic/NASP-projekat/WriteAheadLog"
 	"io/ioutil"
