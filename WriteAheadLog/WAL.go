@@ -3,7 +3,6 @@ package WriteAheadLog
 import (
 	"bufio"
 	"encoding/binary"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -25,7 +24,7 @@ import (
 
 
 type WAL struct{
-	walPath string
+	WalPath        string
 	CurrentSegment string
 	NumberOfSegments int
 	lwm uint32
@@ -33,8 +32,8 @@ type WAL struct{
 	NumberOfEntries uint32
 }
 
-func CreateWAL(walPath string, segmentCapacity uint32, lwm uint32) (*WAL, error){
-	w := &WAL{walPath: walPath, segmentCapacity: segmentCapacity, lwm: lwm}
+func CreateWAL(walPath string, segmentCapacity uint32, lwm uint32) *WAL {
+	w := &WAL{WalPath: walPath, segmentCapacity: segmentCapacity, lwm: lwm}
 	segments, err := ioutil.ReadDir(walPath)
 	w.NumberOfSegments = len(segments)
 	if err != nil{
@@ -49,7 +48,7 @@ func CreateWAL(walPath string, segmentCapacity uint32, lwm uint32) (*WAL, error)
 			w.createNewSegment()
 		}
 	}
-	return w, nil
+	return w
 }
 func (w* WAL) getNumberOfEntries() uint32{
 	file, err := os.OpenFile(w.CurrentSegment, os.O_RDONLY, 0777)
@@ -61,15 +60,13 @@ func (w* WAL) getNumberOfEntries() uint32{
 	reader := bufio.NewReader(file)
 	var num uint32 = 0
 	for {
-		err, ent := Decode(reader)
-		fmt.Println(ent, "entry")
+		err, _ := Decode(reader)
 		if err == nil {
 			num++
 		}else {
 			break
 		}
 	}
-	file.Close()
 	return num
 }
 
@@ -97,7 +94,7 @@ func (w* WAL) AddEntry(key string, value []byte, tombstone byte) bool{
 }
 
 func (w* WAL) createNewSegment(){
-	newFile, err := os.Create(w.walPath+"log_"+ strconv.Itoa(w.NumberOfSegments+1) +".bin")
+	newFile, err := os.Create(w.WalPath +"log_"+ strconv.Itoa(w.NumberOfSegments+1) +".bin")
 	if err != nil{
 		panic(err)
 	}
@@ -108,24 +105,24 @@ func (w* WAL) createNewSegment(){
 }
 
 func (w* WAL) RemoveSegments() {
-	segments, err := ioutil.ReadDir(w.walPath)
+	segments, err := ioutil.ReadDir(w.WalPath)
 	if err != nil{
 		panic(err)
 	}
 	for i := 0; i < len(segments); i++ {
 		if uint32(i) < w.lwm{
-			err := os.Remove(w.walPath + segments[i].Name())
+			err := os.Remove(w.WalPath + segments[i].Name())
 			if err != nil {
 				panic(err)
 			}
 			w.NumberOfSegments--
 		}else{
 			newName :="log_"+ strconv.Itoa(i+1-int(w.lwm))+ ".bin"
-			err := os.Rename(w.walPath + segments[i].Name(), w.walPath+newName)
+			err := os.Rename(w.WalPath+ segments[i].Name(), w.WalPath+newName)
 			if err != nil {
 				panic(err)
 			}
-			w.CurrentSegment = w.walPath+newName
+			w.CurrentSegment = w.WalPath +newName
 		}
 
 	}
@@ -134,12 +131,12 @@ func (w* WAL) RemoveSegments() {
 }
 func (w* WAL) RemoveAllSegments(){
 
-	segments, err := ioutil.ReadDir(w.walPath)
+	segments, err := ioutil.ReadDir(w.WalPath)
 	if err != nil{
 		panic(err)
 	}
 	for i := 0; i < len(segments); i++ {
-		err := os.Remove(w.walPath + segments[i].Name())
+		err := os.Remove(w.WalPath + segments[i].Name())
 		if err != nil {
 			panic(err)
 		}

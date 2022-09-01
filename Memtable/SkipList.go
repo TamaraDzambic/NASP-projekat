@@ -1,4 +1,4 @@
-package memtable
+package Memtable
 
 import (
 	"fmt"
@@ -156,9 +156,9 @@ func (skipL *SkipList) GetElements () []WriteAheadLog.Entry{
 
 func BoolToByte(flag bool) byte{
 	if flag==true{
-		return 0
-	} else {
 		return 1
+	} else {
+		return 0
 	}
 }
 
