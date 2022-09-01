@@ -99,9 +99,14 @@ func writeBloomFilter(filename string, bf *BloomFilter) {
 func readBloomFilter(filename string) (bf *BloomFilter) {
 	file, err := os.Open(filename)
 	if err != nil {
-		panic(err)
+		file, err = os.Create(filename)
+		if err!=nil{
+			panic(err)
+		}
 	}
 	defer file.Close()
+
+
 
 	decoder := gob.NewDecoder(file)
 	bf = new(BloomFilter)
@@ -113,10 +118,8 @@ func readBloomFilter(filename string) (bf *BloomFilter) {
 	for {
 		err = decoder.Decode(bf)
 		if err != nil {
-			//fmt.Println(err)
 			break
 		}
-		//fmt.Println(*bf)
 	}
 	bf.hashs = CopyHashFunctions(bf.k, bf.TimeConst)
 	return

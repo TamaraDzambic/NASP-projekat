@@ -1,7 +1,6 @@
 package Memtable
 
 import (
-	"fmt"
 	"github.com/TamaraDzambic/NASP-projekat/SSTable"
 )
 
@@ -14,7 +13,6 @@ type Memtable struct {
 
 func (memtable *Memtable) Set(key string, value []byte, tombstone bool) bool{
 	if memtable.SkipList.size <= memtable.capacity {
-		fmt.Println("put: ", key)
 		memtable.SkipList.Set(key, value, tombstone)
 		return false //no flush
 	} else {
@@ -48,7 +46,6 @@ func NewMemtable(maxCapacity int, table *SSTable.SSTable) *Memtable {
 func (memtable *Memtable) Flush(){
 	elements := memtable.SkipList.GetElements()
 	memtable.SSTable.WriteData(elements)
-	memtable.SkipList.PrintList()
 	memCap := memtable.capacity
 	*memtable = *NewMemtable(memCap, memtable.SSTable)
 }

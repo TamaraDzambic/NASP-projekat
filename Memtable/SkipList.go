@@ -77,27 +77,28 @@ func (skipL *SkipList) Set(key string, value []byte, tombstone bool) *Element {
 }
 
 func (skipL *SkipList) Get(key string) *Element {
-	currentNode := skipL.head
-	for i := skipL.height - 1; i >= 0; i-- {
-		next := currentNode.next[i]
-		for next != nil {
-			currentNode = next
-			next = currentNode.next[i]
-			if currentNode.Key == key {
-				return currentNode
-			}
-			if next == nil || currentNode.Key > key {
+	current := skipL.head
+	for i := skipL.height; i >= 0; i-- {
+		for ; current.next[i] != nil; current = current.next[i] {
+			next := current.next[i]
+			if next.Key > key {
 				break
 			}
 		}
+		if current.Key == key {
+			if current.Tombstone {
+				return nil
+			} else {
+				return current
+			}
+		}
 	}
-
 	return nil
 }
 
 func (skipL *SkipList) Remove(key string) *Element {
 	currentNode := skipL.head
-	for i := skipL.height - 1; i >= 0; i-- {
+	for i := skipL.height - 1; i > -1; i-- {
 		next := currentNode.next[i]
 		for next != nil {
 			currentNode = next

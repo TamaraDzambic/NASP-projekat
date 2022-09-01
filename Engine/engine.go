@@ -140,7 +140,7 @@ func (engine *Engine) put(key string, value []byte, tombstone byte) bool{
 	if engine.memtable.Set(key, value, t){
 		engine.wal.RemoveSegments()    //ako je pozvana flush funkcija izbrisi segmente sa tim elementima iz wala
 	}
-	engine.memtable.SkipList.PrintList()
+	//engine.memtable.SkipList.PrintList()
 
 
 	return false
